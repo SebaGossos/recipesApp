@@ -29,7 +29,30 @@ function initApp() {
 
         fetch( url )
             .then( res => res.json() )
-            .then( res => console.log(res ) )
+            .then( showRecipes )
+    }
+
+    function showRecipes({ meals = [] }) {
+        // iterate in result
+        meals.forEach( recipe => {
+
+            const { strMeal, strMealThumb, idMeal } = recipe;
+
+            const recipeContainer = document.createElement('DIV');
+            recipeContainer.classList.add('col-md-4');
+
+            recipeCard = document.createElement('DIV');
+            recipeCard.classList.add('card', 'mb-4');
+
+            const recipeImage = document.createElement('IMG');
+            recipeImage.classList.add('card-img-top');
+            recipeImage.alt = ` Imagen de la receta ${ strMeal }`
+            recipeImage.src = strMealThumb
+
+            const recipeCardBody = document.createElement('DIV');
+            recipeCardBody.classList.add('card-body');
+
+        });
     }
 }
 
