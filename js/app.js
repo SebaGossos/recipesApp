@@ -38,6 +38,12 @@ function initApp() {
     function showRecipes({ meals = [] }) {
         
         cleanHtml( result );
+        
+        const heading = document.createElement('H2');
+        heading.classList.add('text-center', 'text-black', 'my-5');
+        heading.textContent = meals.length ? 'Resultados' : 'No hay resultados';
+        result.appendChild( heading );
+        
 
         // iterate in result
         meals.forEach( recipe => {
