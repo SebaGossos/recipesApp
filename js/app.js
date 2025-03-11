@@ -1,7 +1,10 @@
 function initApp() {
 
     const selectCategories = document.querySelector('#categorias');
-    selectCategories.addEventListener('change', selectCategory)
+    selectCategories.addEventListener('change', selectCategory);
+
+    // selectors
+    const result = document.querySelector('#resultado');
 
     getCategories();
 
@@ -33,6 +36,9 @@ function initApp() {
     }
 
     function showRecipes({ meals = [] }) {
+        
+        cleanHtml( result );
+
         // iterate in result
         meals.forEach( recipe => {
 
@@ -41,7 +47,7 @@ function initApp() {
             const recipeContainer = document.createElement('DIV');
             recipeContainer.classList.add('col-md-4');
 
-            recipeCard = document.createElement('DIV');
+            const recipeCard = document.createElement('DIV');
             recipeCard.classList.add('card', 'mb-4');
 
             const recipeImage = document.createElement('IMG');
@@ -52,7 +58,41 @@ function initApp() {
             const recipeCardBody = document.createElement('DIV');
             recipeCardBody.classList.add('card-body');
 
+            const recipeHeading = document.createElement('H3');
+            recipeHeading.classList.add('card-title', 'mb-3');
+            recipeHeading.textContent = strMeal;
+
+            const recipeBtn = document.createElement('BUTTON');
+            recipeBtn.classList.add('btn', 'btn-danger', 'w-100');
+            recipeBtn.textContent = 'Mostrar Receta';
+
+            
+            /* 
+            .result
+                recipeConteiner
+                    .card 
+                        img
+                        .card-body
+                            h3
+                            button 
+            */
+            recipeCardBody.appendChild( recipeHeading );
+            recipeCardBody.appendChild( recipeBtn );
+
+            recipeCard.appendChild( recipeImage );
+            recipeCard.appendChild( recipeCardBody );
+            
+            recipeContainer.appendChild( recipeCard );
+
+            result.appendChild( recipeContainer );
+
         });
+    }
+
+    function cleanHtml( selector ) {
+        while( selector.firstChild ) {
+            selector.removeChild( selector.firstChild );
+        }
     }
 }
 
