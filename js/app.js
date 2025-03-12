@@ -39,15 +39,16 @@ function initApp() {
     function showRecipes({ meals = [] }) {
         
         cleanHtml( result );
+
         
         const heading = document.createElement('H2');
         heading.classList.add('text-center', 'text-black', 'my-5');
-        heading.textContent = meals.length ? 'Resultados' : 'No hay resultados';
+        heading.textContent = meals?.length ? 'Resultados' : 'No hay resultados';
         result.appendChild( heading );
         
 
         // iterate in result
-        meals.forEach( recipe => {
+        meals?.forEach( recipe => {
 
             const { strMeal, strMealThumb, idMeal } = recipe;
 
@@ -109,9 +110,7 @@ function initApp() {
     }
 
     function showRecipeModal( recipe ) {
-        console.log( recipe )
-
-        const { idMeal, strInstructions, strMeal, strMealThumb } = recipe
+        const { idMeal, strInstructions, strMeal, strMealThumb } = recipe;
         
         const modalTitle = document.querySelector('.modal .modal-title');
         const modalBody = document.querySelector('.modal .modal-body');
@@ -143,11 +142,27 @@ function initApp() {
         }
 
         modalBody.appendChild( listGroup );
+
+        const modalFooter = document.querySelector('.modal-footer');
+        cleanHtml( modalFooter );
+
+        // botons to close and favorite
+        const btnFavorite = document.createElement('BUTTON');
+        btnFavorite.classList.add('btn', 'btn-danger', 'col');
+        btnFavorite.textContent = 'Guardar Favorito'
+
+
+        const btnCloseModal = document.createElement('BUTTON');
+        btnCloseModal.classList.add('btn', 'btn-secondary', 'col');
+        btnCloseModal.textContent = 'Cerrar';
+        btnCloseModal.onclick = () => modal.hide();
+
+        modalFooter.appendChild( btnFavorite );
+        modalFooter.appendChild( btnCloseModal );
         
         // showModal
         modal.show();
-
-
+        
     }
 
     function cleanHtml( selector ) {
