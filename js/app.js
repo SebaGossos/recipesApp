@@ -5,6 +5,7 @@ function initApp() {
 
     // selectors
     const result = document.querySelector('#resultado');
+    const modal = new bootstrap.Modal('#modal', {});
 
     getCategories();
 
@@ -71,6 +72,11 @@ function initApp() {
             const recipeBtn = document.createElement('BUTTON');
             recipeBtn.classList.add('btn', 'btn-danger', 'w-100');
             recipeBtn.textContent = 'Mostrar Receta';
+            // recipeBtn.dataset.bsTarget = "#modal";
+            // recipeBtn.dataset.bsToggle = "modal";
+            recipeBtn.onclick = function() {
+                selectRecipe( idMeal );
+            }
 
             
             /* 
@@ -93,6 +99,55 @@ function initApp() {
             result.appendChild( recipeContainer );
 
         });
+    }
+
+    function selectRecipe( id ) {
+        const url = `https://themealdb.com/api/json/v1/1/lookup.php?i=${ id }`;
+        fetch( url )
+            .then(res => res.json())
+            .then( res => showRecipeModal( res.meals[0] ))
+    }
+
+    function showRecipeModal( recipe ) {
+        console.log( recipe )
+
+        const { idMeal, strInstructions, strMeal, strMealThumb } = recipe
+        
+        const modalTitle = document.querySelector('.modal .modal-title');
+        const modalBody = document.querySelector('.modal .modal-body');
+
+
+        modalTitle.textContent = strMeal;
+        modalBody.innerHTML = `
+            <img  clas="img-fluid" width=450 src="${ strMealThumb }" alt="recipe ${ strMeal }" />
+            <h3 class="my-3">Instrucciones</h3>
+            <p>${ strInstructions }</p>
+            <h3 class="my-3">Ingredientes y Cantidades<h3>
+        `;
+
+        const listGroup = document.createElement('UL');
+        listGroup.classList.add('list-group');
+
+        // show quantity and ingredients
+        for (let i = 1; i <= 20; i++ ) {
+            if ( recipe[`strIngredient${ i }`] ) {
+                const ingredient = recipe[`strIngredient${ i }`];
+                const quantity = recipe[`strMeasure${ i }`];
+
+                const ingredientLi = document.createElement('LI');
+                ingredientLi.classList.add('list-group-item')
+                ingredientLi.textContent = `${ ingredient } - ${ quantity }`;
+
+                listGroup.appendChild( ingredientLi );
+            }
+        }
+
+        modalBody.appendChild( listGroup );
+        
+        // showModal
+        modal.show();
+
+
     }
 
     function cleanHtml( selector ) {
