@@ -7,6 +7,11 @@ function initApp() {
     const result = document.querySelector('#resultado');
     const modal = new bootstrap.Modal('#modal', {});
 
+    // localStorage
+    const getFavorites = () => JSON.parse( localStorage.getItem('favorites') ) ?? [];  
+    
+    
+    
     getCategories();
 
     function getCategories() {
@@ -112,6 +117,7 @@ function initApp() {
     function showRecipeModal( recipe ) {
         const { idMeal, strInstructions, strMeal, strMealThumb } = recipe;
         
+        
         const modalTitle = document.querySelector('.modal .modal-title');
         const modalBody = document.querySelector('.modal .modal-body');
 
@@ -149,7 +155,42 @@ function initApp() {
         // botons to close and favorite
         const btnFavorite = document.createElement('BUTTON');
         btnFavorite.classList.add('btn', 'btn-danger', 'col');
-        btnFavorite.textContent = 'Guardar Favorito'
+        btnFavorite.textContent = 'Guardar Favorito';
+        
+
+        // localStorage 
+
+        //--------------------------------------------
+
+        
+        const favorites = getFavorites();
+        function wasDeleted(isAdded) {
+            if ( isAdded === false ){
+                btnFavorite.textContent = 'Eliminar Favorito';
+                btnFavorite.onclick = () => deleteFavorite( idMeal, wasDeleted );
+                return;
+            }
+            btnFavorite.textContent = 'Guardar Favorito';
+            btnFavorite.onclick = () => addFavorite({
+                id: idMeal,
+                title: strMeal,
+                img: strMealThumb
+            }, wasDeleted);
+
+            return;
+        }
+        if( isRecipeinLocalStorage( favorites, idMeal ) ) {
+            btnFavorite.textContent = 'Eliminar Favorito';
+            btnFavorite.onclick = () => deleteFavorite( idMeal, wasDeleted );
+        } else {
+            btnFavorite.onclick = () => addFavorite({
+                id: idMeal,
+                title: strMeal,
+                img: strMealThumb
+            }, wasDeleted);
+        }
+        //--------------------------------------------  
+
 
 
         const btnCloseModal = document.createElement('BUTTON');
@@ -157,13 +198,34 @@ function initApp() {
         btnCloseModal.textContent = 'Cerrar';
         btnCloseModal.onclick = () => modal.hide();
 
-        modalFooter.appendChild( btnFavorite );
+        
         modalFooter.appendChild( btnCloseModal );
+        modalFooter.appendChild( btnFavorite );
         
         // showModal
         modal.show();
         
     }
+
+    function addFavorite( recipe, callback ) {
+        const favorites = getFavorites();
+        if( isRecipeinLocalStorage( favorites, recipe.id ) ) return;
+        localStorage.setItem('favorites', JSON.stringify([...favorites, recipe ]));
+        callback(false);
+    }
+    
+    function deleteFavorite( id, callback ) {
+        const favorites = getFavorites();
+        const newFavorites = favorites.filter( item => item.id !== id );
+        localStorage.setItem('favorites', JSON.stringify(newFavorites));
+        callback(true);
+    }
+
+    function isRecipeinLocalStorage( favorites, id ) {
+        if( favorites.some(item => item.id === id ) ) return true; // didn´t added to localStorage
+        return false 
+    }
+
 
     function cleanHtml( selector ) {
         while( selector.firstChild ) {
