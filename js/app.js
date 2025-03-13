@@ -8,7 +8,9 @@ function initApp() {
     const modal = new bootstrap.Modal('#modal', {});
 
     // localStorage
-    const getFavorites = () => JSON.parse( localStorage.getItem('favorites') ) ?? [];  
+    const getFavorites = () => JSON.parse( localStorage.getItem('favorites') ) ?? [];
+    const saveFavorites = favorites => localStorage.setItem('favorites', JSON.stringify(favorites));
+
     
     
     
@@ -155,43 +157,52 @@ function initApp() {
         // botons to close and favorite
         const btnFavorite = document.createElement('BUTTON');
         btnFavorite.classList.add('btn', 'btn-danger', 'col');
-        btnFavorite.textContent = 'Guardar Favorito';
+        btnFavorite.textContent = isRecipeinLocalStorage( getFavorites(), idMeal ) ? 'Eliminar Favorito' : 'Guardar Favorito';
+
+        btnFavorite.onclick = () => {
+            if( isRecipeinLocalStorage( getFavorites(), idMeal ) ) {
+                deleteFavorite(idMeal);
+                btnFavorite.textContent = 'Guardar Favorito';
+                return;
+            }
+            addFavorite({
+                id: idMeal,
+                title: strMeal,
+                img: strMealThumb
+            });
+            btnFavorite.textContent = 'Eliminar Favorito';
+
+        }
         
 
         // localStorage 
 
-        //--------------------------------------------
-
         
-        const favorites = getFavorites();
-        function wasDeleted(isAdded) {
-            if ( isAdded === false ){
-                btnFavorite.textContent = 'Eliminar Favorito';
-                btnFavorite.onclick = () => deleteFavorite( idMeal, wasDeleted );
-                return;
-            }
-            btnFavorite.textContent = 'Guardar Favorito';
-            btnFavorite.onclick = () => addFavorite({
-                id: idMeal,
-                title: strMeal,
-                img: strMealThumb
-            }, wasDeleted);
+        // function wasDeleted(isAdded) {
+        //     if ( isAdded === false ){
+        //         btnFavorite.textContent = 'Eliminar Favorito';
+        //         btnFavorite.onclick = () => deleteFavorite( idMeal, wasDeleted );
+        //         return;
+        //     }
+        //     btnFavorite.textContent = 'Guardar Favorito';
+        //     btnFavorite.onclick = () => addFavorite({
+        //         id: idMeal,
+        //         title: strMeal,
+        //         img: strMealThumb
+        //     }, wasDeleted);
 
-            return;
-        }
-        if( isRecipeinLocalStorage( favorites, idMeal ) ) {
-            btnFavorite.textContent = 'Eliminar Favorito';
-            btnFavorite.onclick = () => deleteFavorite( idMeal, wasDeleted );
-        } else {
-            btnFavorite.onclick = () => addFavorite({
-                id: idMeal,
-                title: strMeal,
-                img: strMealThumb
-            }, wasDeleted);
-        }
-        //--------------------------------------------  
-
-
+        //     return;
+        // }
+        // if( isRecipeinLocalStorage( favorites, idMeal ) ) {
+        //     btnFavorite.textContent = 'Eliminar Favorito';
+        //     btnFavorite.onclick = () => deleteFavorite( idMeal, wasDeleted );
+        // } else {
+        //     btnFavorite.onclick = () => addFavorite({
+        //         id: idMeal,
+        //         title: strMeal,
+        //         img: strMealThumb
+        //     }, wasDeleted);
+        // }
 
         const btnCloseModal = document.createElement('BUTTON');
         btnCloseModal.classList.add('btn', 'btn-secondary', 'col');
@@ -207,18 +218,17 @@ function initApp() {
         
     }
 
-    function addFavorite( recipe, callback ) {
+    function addFavorite( recipe ) {
         const favorites = getFavorites();
         if( isRecipeinLocalStorage( favorites, recipe.id ) ) return;
-        localStorage.setItem('favorites', JSON.stringify([...favorites, recipe ]));
-        callback(false);
+        saveFavorites([...favorites, recipe ]);
+
     }
     
-    function deleteFavorite( id, callback ) {
+    function deleteFavorite( id ) {
         const favorites = getFavorites();
         const newFavorites = favorites.filter( item => item.id !== id );
-        localStorage.setItem('favorites', JSON.stringify(newFavorites));
-        callback(true);
+        saveFavorites(newFavorites);
     }
 
     function isRecipeinLocalStorage( favorites, id ) {
