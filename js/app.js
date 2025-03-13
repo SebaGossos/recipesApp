@@ -1,8 +1,5 @@
 function initApp() {
 
-    const selectCategories = document.querySelector('#categorias');
-    selectCategories.addEventListener('change', selectCategory);
-
     // selectors
     const result = document.querySelector('#resultado');
     const modal = new bootstrap.Modal('#modal', {});
@@ -11,21 +8,29 @@ function initApp() {
     const getFavorites = () => JSON.parse( localStorage.getItem('favorites') ) ?? [];
     const saveFavorites = favorites => localStorage.setItem('favorites', JSON.stringify(favorites));
 
+
+    const selectCategories = document.querySelector('#categorias');
+    if ( selectCategories ) {
+        selectCategories.addEventListener('change', selectCategory);
+        getCategories();
+    }
     
-    
-    
-    getCategories();
+    const favoriteDiv = document.querySelector('.favoritos');
+
+    if ( favoriteDiv ) {
+        showFavorites();
+    }
+
 
     function getCategories() {
         const url = 'https://www.themealdb.com/api/json/v1/1/categories.php'
         fetch( url )
             .then( res => res.json() )
-            .then( showCategories )
+            .then( showCategories ) 
     }
 
     function showCategories({ categories = [] }) {
         categories.forEach( category => {
-
             const { strCategory } = category;
             const option = document.createElement('OPTION');
             option.value = strCategory;
@@ -43,8 +48,10 @@ function initApp() {
             .then( showRecipes )
     }
 
-    function showRecipes({ meals = [] }) {
-        
+    function showRecipes(recipe) {
+
+        const meals = recipe.meals ?? recipe;
+    
         cleanHtml( result );
 
         
@@ -57,7 +64,10 @@ function initApp() {
         // iterate in result
         meals?.forEach( recipe => {
 
-            const { strMeal, strMealThumb, idMeal } = recipe;
+            const { strMeal, strMealThumb, idMeal } = recipe; // for init page
+            const { img, id, title } = recipe; // for My favorite page
+
+
 
             const recipeContainer = document.createElement('DIV');
             recipeContainer.classList.add('col-md-4');
@@ -68,14 +78,14 @@ function initApp() {
             const recipeImage = document.createElement('IMG');
             recipeImage.classList.add('card-img-top');
             recipeImage.alt = ` Imagen de la receta ${ strMeal }`
-            recipeImage.src = strMealThumb
+            recipeImage.src = strMealThumb ?? img;
 
             const recipeCardBody = document.createElement('DIV');
             recipeCardBody.classList.add('card-body');
 
             const recipeHeading = document.createElement('H3');
             recipeHeading.classList.add('card-title', 'mb-3');
-            recipeHeading.textContent = strMeal;
+            recipeHeading.textContent = strMeal ?? title;
 
             const recipeBtn = document.createElement('BUTTON');
             recipeBtn.classList.add('btn', 'btn-danger', 'w-100');
@@ -83,7 +93,7 @@ function initApp() {
             // recipeBtn.dataset.bsTarget = "#modal";
             // recipeBtn.dataset.bsToggle = "modal";
             recipeBtn.onclick = function() {
-                selectRecipe( idMeal );
+                selectRecipe( idMeal ?? id );
             }
 
             
@@ -157,12 +167,18 @@ function initApp() {
         // botons to close and favorite
         const btnFavorite = document.createElement('BUTTON');
         btnFavorite.classList.add('btn', 'btn-danger', 'col');
-        btnFavorite.textContent = isRecipeinLocalStorage( getFavorites(), idMeal ) ? 'Eliminar Favorito' : 'Guardar Favorito';
+        btnFavorite.textContent = isRecipeinLocalStorage( idMeal ) ? 'Eliminar Favorito' : 'Guardar Favorito';
 
         btnFavorite.onclick = () => {
-            if( isRecipeinLocalStorage( getFavorites(), idMeal ) ) {
+            if( isRecipeinLocalStorage( idMeal ) ) {
                 deleteFavorite(idMeal);
                 btnFavorite.textContent = 'Guardar Favorito';
+                showToast('Eliminando correctamente');
+                if (favoriteDiv) {
+                    setTimeout(() => {
+                        window.location.reload()
+                    },2000)
+                }
                 return;
             }
             addFavorite({
@@ -171,47 +187,18 @@ function initApp() {
                 img: strMealThumb
             });
             btnFavorite.textContent = 'Eliminar Favorito';
+            showToast('Agregado correctamente');
 
         }
         
-
-        // localStorage 
-
-        
-        // function wasDeleted(isAdded) {
-        //     if ( isAdded === false ){
-        //         btnFavorite.textContent = 'Eliminar Favorito';
-        //         btnFavorite.onclick = () => deleteFavorite( idMeal, wasDeleted );
-        //         return;
-        //     }
-        //     btnFavorite.textContent = 'Guardar Favorito';
-        //     btnFavorite.onclick = () => addFavorite({
-        //         id: idMeal,
-        //         title: strMeal,
-        //         img: strMealThumb
-        //     }, wasDeleted);
-
-        //     return;
-        // }
-        // if( isRecipeinLocalStorage( favorites, idMeal ) ) {
-        //     btnFavorite.textContent = 'Eliminar Favorito';
-        //     btnFavorite.onclick = () => deleteFavorite( idMeal, wasDeleted );
-        // } else {
-        //     btnFavorite.onclick = () => addFavorite({
-        //         id: idMeal,
-        //         title: strMeal,
-        //         img: strMealThumb
-        //     }, wasDeleted);
-        // }
-
         const btnCloseModal = document.createElement('BUTTON');
         btnCloseModal.classList.add('btn', 'btn-secondary', 'col');
         btnCloseModal.textContent = 'Cerrar';
         btnCloseModal.onclick = () => modal.hide();
 
         
-        modalFooter.appendChild( btnCloseModal );
         modalFooter.appendChild( btnFavorite );
+        modalFooter.appendChild( btnCloseModal );
         
         // showModal
         modal.show();
@@ -219,10 +206,9 @@ function initApp() {
     }
 
     function addFavorite( recipe ) {
-        const favorites = getFavorites();
-        if( isRecipeinLocalStorage( favorites, recipe.id ) ) return;
-        saveFavorites([...favorites, recipe ]);
-
+        if( isRecipeinLocalStorage( recipe.id ) ) return;
+        const newFavorite = [ ...getFavorites(), recipe ]
+        saveFavorites( newFavorite );
     }
     
     function deleteFavorite( id ) {
@@ -231,11 +217,32 @@ function initApp() {
         saveFavorites(newFavorites);
     }
 
-    function isRecipeinLocalStorage( favorites, id ) {
+    function isRecipeinLocalStorage( id ) {
+        const favorites = getFavorites();
         if( favorites.some(item => item.id === id ) ) return true; // didn´t added to localStorage
         return false 
     }
 
+    function showToast( message ) {
+        const toastDiv = document.querySelector('#toast');
+        const toastBody = document.querySelector('.toast-body');
+        const toast = new bootstrap.Toast( toastDiv);
+        toastBody.textContent = message;
+        toast.show();
+    }
+
+    function showFavorites() {
+        const favorites = getFavorites();
+        if( favorites.length ) {
+            showRecipes( favorites )
+            return;
+        }
+        
+        const noFavorites = document.createElement('P');
+        noFavorites.textContent = 'No hay favoritos aún';
+        noFavorites.classList.add('fs-4', 'text-center', 'font-bold', 'mt-5' );
+        favoriteDiv.appendChild( noFavorites );
+    }
 
     function cleanHtml( selector ) {
         while( selector.firstChild ) {
